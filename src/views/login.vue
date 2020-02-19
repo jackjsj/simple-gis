@@ -3,7 +3,7 @@
     <p class="wh b title">北京市过街天桥可视化养护管理平台</p>
     <el-card class="box-card">
       <p class="f20 mb20">用户登录</p>
-      <el-form label-position="left" label-width="55px">
+      <el-form label-position="left" label-width="60px">
         <el-form-item label="用户名">
           <el-input v-model="username"></el-input>
         </el-form-item>
@@ -59,7 +59,7 @@ export default {
 }
 .title {
   margin-bottom: 80px;
-  font-size: 40px;
+  font-size: 60px;
   text-shadow: 5px 5px 2px black;
 }
 </style>

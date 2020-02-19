@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <el-form ref="form" label-width="100px"
-      label-position="left">
+  <div class="detail">
+    <el-form ref="form"
+      label-position="left" label-width="110px">
       <el-form-item v-for="f in fields.filter(f=>!f.hide)"
         :key="f.key"
         :label="f.name">
@@ -143,11 +143,29 @@ export default {
   margin: 5px;
 }
 .el-input {
-  width: 200px;
+  // width: 200px;
+}
+.detail {
+  height: 580px;
+  overflow: auto;
 }
 </style>
 <style lang="scss">
-.el-input__inner:read-only {
-  background: rgba(238, 238, 238, 0.5);
+.detail {
+  // .el-form-item__label {
+  //   width: 100px;
+  // }
+  .el-input__inner {
+    height: 30px;
+  }
+  .el-form-item__label{
+    line-height: 30px;
+  }
+  .el-form-item__content{
+    line-height: 30px;
+  }
+  .el-input__inner:read-only {
+    background: rgba(238, 238, 238, 0.5);
+  }
 }
 </style>

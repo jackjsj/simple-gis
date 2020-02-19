@@ -1,7 +1,7 @@
 <template>
   <div class="home flex-col">
     <div class="flex aic jcb pl20 pr20 flex-none">
-      <p class="b f24">北京市过街天桥可视化养护管理平台</p>
+      <p class="b f30 title">北京市过街天桥可视化养护管理平台</p>
       <el-menu
         class="el-menu-demo"
         mode="horizontal"
@@ -393,7 +393,7 @@ export default {
   position: absolute;
   left: 10px;
   top: 10px;
-  width: 400px;
+  width: 380px;
 }
 .legend-box {
   position: absolute;
@@ -449,7 +449,7 @@ export default {
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 400px;
+  // width: 400px;
   background: rgba(255, 255, 255, 1);
   border: 1px solid #ddd;
 }
@@ -481,7 +481,12 @@ export default {
     padding: 10px 10px 25px;
   }
   .el-card__header {
-    padding: 10px;
+    padding: 8px 10px;
+  }
+  .el-submenu__title {
+    font-size: 20px;
+    color: #000 !important;
+    font-weight: bold;
   }
 }
 </style>
