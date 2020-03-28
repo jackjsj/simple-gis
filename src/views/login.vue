@@ -1,6 +1,6 @@
 <template>
   <div class="login">
-    <p class="wh b title">北京市过街天桥可视化养护管理平台</p>
+    <p class="wh b title">北京市过街天桥可视化养护管理系统</p>
     <el-card class="box-card">
       <p class="f20 mb20">用户登录</p>
       <el-form label-position="left" label-width="60px">

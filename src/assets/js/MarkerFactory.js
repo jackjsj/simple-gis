@@ -1,4 +1,5 @@
-import { ringColors } from '@/assets/js/constant';
+import { ringColors, saturationColors } from '@/assets/js/constant';
+import { saturation2Code } from '@/assets/js/utils';
 
 export default class MarkerFactory {
   // 获取彩色Marker
@@ -19,7 +20,7 @@ export default class MarkerFactory {
   static getBubbleMarker(point, isSelected) {
     return new BMap.Circle(new BMap.Point(point.lon, point.lat), point.flow, {
       strokeColor: isSelected ? '#6ac160' : '#ddd',
-      fillColor: ringColors[point.ring],
+      fillColor: saturationColors[saturation2Code(point.saturation)],
       strokeWeight: isSelected ? 2 : 1,
       fillOpacity: 0.4,
       strokeStyle: isSelected ? 'solid' : 'dashed',

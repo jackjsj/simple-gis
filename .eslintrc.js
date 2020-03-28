@@ -22,6 +22,7 @@ module.exports = {
     'no-unused-expressions': ['off'],
     'guard-for-in': ['off'],
     'no-restricted-syntax': ['off'],
+    'import/no-unresolved': ['off'],
   },
   overrides: [
     {

@@ -1,25 +1,37 @@
 <template>
   <div class="home flex-col">
     <div class="flex aic jcb pl20 pr20 flex-none">
-      <p class="b f30 title">北京市过街天桥可视化养护管理平台</p>
-      <el-menu
-        class="el-menu-demo"
-        mode="horizontal"
-        default-active=""
-        @select="onMenuItemChange">
-        <el-submenu index="1">
-          <template slot="title">信息显示</template>
-          <el-menu-item index="点位图">点位图</el-menu-item>
-          <el-menu-item index="气泡图">气泡图</el-menu-item>
-          <el-menu-item index="待优化设施">待优化设施</el-menu-item>
-        </el-submenu>
-        <el-submenu index="2">
-          <template slot="title">信息统计</template>
-          <el-menu-item @click="showStatResult(item.name)"
-            v-for="item in statisticIndex"
-            :key="item.name">{{item.name}}</el-menu-item>
-        </el-submenu>
-      </el-menu>
+      <p class="b f30 title">北京市过街天桥可视化养护管理系统</p>
+      <div class="flex aic ">
+        <el-menu
+          class="el-menu-demo"
+          mode="horizontal"
+          default-active=""
+          @select="onMenuItemChange">
+          <el-submenu index="1">
+            <template slot="title">信息显示</template>
+            <el-menu-item index="点位图">点位图</el-menu-item>
+            <el-menu-item index="气泡图">气泡图</el-menu-item>
+            <el-menu-item index="待优化设施">待优化设施</el-menu-item>
+          </el-submenu>
+          <el-submenu index="2">
+            <template slot="title">信息统计</template>
+            <el-menu-item @click="showStatResult(item.name)"
+              v-for="item in statisticIndex"
+              :key="item.name">{{item.name}}</el-menu-item>
+          </el-submenu>
+          <el-submenu index="3">
+            <template slot="title">数据导出</template>
+            <el-menu-item
+              v-for="item in exportItems"
+              :key="item.name"
+              @click="exportExcel(item)">{{item.name}}</el-menu-item>
+          </el-submenu>
+        </el-menu>
+        <el-button type="danger" icon="el-icon-user-solid" round
+          @click="logout">登出</el-button>
+      </div>
+
     </div>
     <div class="rel flex1">
       <div id="map" class="map">
@@ -34,7 +46,7 @@
           </template> -->
           <template #append>
             <el-button type="primary" icon="el-icon-search"
-              @click="search">搜索</el-button>
+              @click="search">搜索道路名称</el-button>
           </template>
         </el-input>
         <!-- 搜索结果 -->
@@ -115,12 +127,24 @@
       <!-- 图例 -->
       <div class="legend-box">
         <p class="f20 mb10">图例</p>
-        <div class="flex jcb">
+        <!-- 环路 -->
+        <div class="flex jcb pb10 mb10 bbd aic">
+          <span class="f16">环路：</span>
           <div
             class="flex aic f16"
             v-for="(value,key) in ringColors" :key="key">
             <div class="legend-item" :style="`background:${value}`"></div>
             <span>{{key>5?5:key}}环{{key>5?'外':''}}</span>
+          </div>
+        </div>
+        <!-- 服务水平 -->
+        <div class="flex jcb aic">
+          <span class="f16">服务水平：</span>
+          <div
+            class="flex aic f16"
+            v-for="(value,key) in saturationColors" :key="key">
+            <div class="legend-item" :style="`background:${value}`"></div>
+            <span>{{key}}级</span>
           </div>
         </div>
       </div>
@@ -146,8 +170,10 @@
 
 <script>
 import axios from 'axios';
+import XLSX from 'xlsx';
 import { Pagination, Menu, MenuItem, Submenu } from 'element-ui';
-import { ringColors } from '@/assets/js/constant';
+import { ringColors, saturationColors, fieldMap } from '@/assets/js/constant';
+import { saturation2Code } from '@/assets/js/utils';
 import MapManager from '@/assets/js/MapManager';
 import Detail from '@/components/Detail';
 
@@ -169,6 +195,79 @@ const statisticIndex = [
   },
 ];
 
+const exportItems = [
+  {
+    name: '按【所在环路】导出',
+    key: 'ring',
+  },
+  {
+    name: '按【服务等级】导出',
+    key: 'saturation',
+  },
+  {
+    name: '按【天桥类型】导出',
+    key: 'type',
+  },
+];
+// 将workbook装化成blob对象
+function workbook2blob(workbook) {
+  // 生成excel的配置项
+  const wopts = {
+    // 要生成的文件类型
+    bookType: 'xlsx',
+    // // 是否生成Shared String Table，官方解释是，如果开启生成速度会下降，但在低版本IOS设备上有更好的兼容性
+    bookSST: false,
+    type: 'binary',
+  };
+  const wbout = XLSX.write(workbook, wopts);
+  // 将字符串转ArrayBuffer
+  function s2ab(s) {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff;
+    return buf;
+  }
+  const blob = new Blob([s2ab(wbout)], {
+    type: 'application/octet-stream',
+  });
+  return blob;
+}
+
+// 将blob对象创建bloburl，然后用a标签实现弹出下载框
+function openDownloadDialog(blob, fileName) {
+  if (typeof blob === 'object' && blob instanceof Blob) {
+    blob = URL.createObjectURL(blob); // 创建blob地址
+  }
+  const aLink = document.createElement('a');
+  aLink.href = blob;
+  // HTML5新增的属性，指定保存文件名，可以不要后缀，注意，有时候 file:///模式下不会生效
+  aLink.download = fileName || '';
+  let event;
+  if (window.MouseEvent) event = new MouseEvent('click');
+  //   移动端
+  else {
+    event = document.createEvent('MouseEvents');
+    event.initMouseEvent(
+      'click',
+      true,
+      false,
+      window,
+      0,
+      0,
+      0,
+      0,
+      0,
+      false,
+      false,
+      false,
+      false,
+      0,
+      null,
+    );
+  }
+  aLink.dispatchEvent(event);
+}
+
 export default {
   components: {
     'el-pagination': Pagination,
@@ -181,8 +280,10 @@ export default {
     return {
       searchContent: '',
       searchResultVisible: false,
-      ringColors,
+      ringColors, // 环路颜色
+      saturationColors, // 服务等级颜色
       statisticIndex,
+      exportItems,
       points: [],
       searchResults: [],
       curPage: 1,
@@ -190,6 +291,7 @@ export default {
       currentDetail: {},
       countByRing: {},
       countByType: {},
+      countBySaturation: {},
       filterList: [],
       mode: '',
     };
@@ -218,6 +320,56 @@ export default {
     this.initMap();
   },
   methods: {
+    // 登出
+    logout() {
+      sessionStorage.setItem('isLogin', '0');
+      this.$router.push('/login');
+    },
+    // 数据导出
+    exportExcel(item) {
+      const { key, name } = item;
+      const wb = XLSX.utils.book_new();
+      // 处理数据 1. 将服务水平转为代码
+      const points = this.points.map(p => ({
+        ...p,
+        saturation: saturation2Code(p.saturation),
+      }));
+      let countBy = {};
+      switch (key) {
+        case 'ring':
+          countBy = this.countByRing;
+          break;
+        case 'type':
+          countBy = this.countByType;
+          break;
+        default:
+          countBy = this.countBySaturation;
+          break;
+      }
+      Object.keys(countBy).forEach(_key => {
+        let sheetName = _key;
+        if (key === 'ring') {
+          sheetName = _key > 5 ? '5环外' : `${_key}环`;
+        }
+        // 生成Excel数据
+        const json = points
+          .filter(p => p[key] == _key)
+          .map(p => ({
+            ...Object.keys(p).reduce((cur, next) => {
+              if (fieldMap[next]) {
+                cur[fieldMap[next]] = p[next];
+              }
+              return cur;
+            }, {}),
+          }));
+        const sheet = XLSX.utils.json_to_sheet(json);
+        XLSX.utils.book_append_sheet(wb, sheet, sheetName);
+      });
+      const workbookBlob = workbook2blob(wb);
+      // 点击下载
+      openDownloadDialog(workbookBlob, `${name}.xlsx`);
+    },
+
     async loadPoints() {
       const ld = this.$loading();
       try {
@@ -225,7 +377,7 @@ export default {
         ld.close();
         this.points = data;
         data.forEach(item => {
-          const { ring, type } = item;
+          const { ring, type, saturation } = item;
           if (!this.countByRing[ring]) {
             this.countByRing[ring] = 1;
           } else {
@@ -235,6 +387,12 @@ export default {
             this.countByType[type] = 1;
           } else {
             this.countByType[type]++;
+          }
+          const saturationCode = saturation2Code(saturation);
+          if (!this.countBySaturation[saturationCode]) {
+            this.countBySaturation[saturationCode] = 1;
+          } else {
+            this.countBySaturation[saturationCode]++;
           }
         });
       } catch {
